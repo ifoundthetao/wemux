@@ -61,6 +61,7 @@ allow_server_list="true"
 allow_user_list="true"
 announce_attach="true"
 announce_server_change="true"
+tmux_location="tmux"
 
 # Prevent users from changing their $USER env variable to become host.
 username=`whoami`
@@ -111,7 +112,7 @@ build_wemux_prefix() {
   # Set socket to include server name.
   socket="${socket_prefix}-$server"
   # Set $wemux to wemux server socket.
-  wemux="tmux -S $socket $options"
+  wemux="$tmux_location -S $socket $options"
 }
 
 # List all currently running wemux servers.
@@ -120,7 +121,7 @@ list_active_servers() {
     if [ "$allow_server_list" == "true" ]; then
       wemux_server_sockets=$socket_prefix*
       for wemux_server in $wemux_server_sockets; do
-        redirect=`tmux -S $wemux_server server-info 2>&1`; server_running=$?
+        redirect=`$tmux_location -S $wemux_server server-info 2>&1`; server_running=$?
         # Number each active server, give it its own line.
         if [ "$server_running" == 0 ]; then
           num=$[num+1]
@@ -178,7 +179,7 @@ list_all_users() {
   if [ "$allow_user_list" == "true" ]; then
       wemux_server_sockets=$socket_prefix*
       for wemux_server in $wemux_server_sockets; do
-        server_running=`tmux -S $wemux_server list-clients`
+        server_running=`$tmux_location -S $wemux_server list-clients`
         if [[ "$server_running" ]] && [[ "$server_running" != *"failed to connect"* ]]; then
           server_name=`echo "$wemux_server" | sed -e "s,$socket_prefix-,,"`
           echo "Users connected to '$server_name':"
@@ -193,7 +194,7 @@ list_all_users() {
             user="$name$mode"
             num=$[num+1]
             echo "  $num. $user"
-          done < <(tmux -S $wemux_server list-clients -F '#{client_tty}')
+          done < <($tmux_location -S $wemux_server list-clients -F '#{client_tty}')
         fi
       done
   else
@@ -313,7 +314,7 @@ has_rogue_session() {
 
 # Returns true if server is successfully killed.
 kill_server_successful() {
-  redirect=`tmux -S $socket kill-server 2>&1`; killed_successfully=$?
+  redirect=`$tmux_location -S $socket kill-server 2>&1`; killed_successfully=$?
   [ "$killed_successfully" == 0 ] && return 0 || return 1;
 }
 
